@@ -20,9 +20,6 @@ FIXED_HEADINGS = ["Experience", "Education", "Skills", "Projects"]
 def clean_text(text):
     return re.sub(r"[\#\*\_]+", "", text).strip()
 
-import os
-import pdfplumber
-
 def extract_sections_from_pdf(uploaded_file):
     # Define folder paths
     raw_folder = "uploaded_raw_files"
