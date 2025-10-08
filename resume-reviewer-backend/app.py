@@ -20,10 +20,32 @@ FIXED_HEADINGS = ["Experience", "Education", "Skills", "Projects"]
 def clean_text(text):
     return re.sub(r"[\#\*\_]+", "", text).strip()
 
+import os
+import pdfplumber
+
 def extract_sections_from_pdf(uploaded_file):
+    # Define folder paths
+    raw_folder = "uploaded_raw_files"
+    processed_folder = "processed_files"
+
+    # Create folders if they don't exist
+    os.makedirs(raw_folder, exist_ok=True)
+    os.makedirs(processed_folder, exist_ok=True)
+
+    # Get file name and paths
+    file_name = os.path.basename(uploaded_file.name)
+    raw_path = os.path.join(raw_folder, file_name)
+    processed_path = os.path.join(processed_folder, f"{os.path.splitext(file_name)[0]}.txt")
+
+    # Save uploaded file in "uploaded_raw_files"
+    with open(raw_path, "wb") as f:
+        f.write(uploaded_file.read())
+
+    # Extract text sections
     sections = {}
     current_section = None
-    with pdfplumber.open(uploaded_file) as pdf:
+
+    with pdfplumber.open(raw_path) as pdf:
         for page in pdf.pages:
             words = page.extract_words(extra_attrs=["size", "fontname"])
             for word in words:
@@ -33,9 +55,19 @@ def extract_sections_from_pdf(uploaded_file):
                     sections[current_section] = []
                 elif current_section:
                     sections[current_section].append(text)
+
     for section in sections:
         sections[section] = " ".join(sections[section])
+
+    # Save processed text to "processed_files"
+    with open(processed_path, "w", encoding="utf-8") as f:
+        for title, content in sections.items():
+            f.write(f"=== {title} ===\n{content}\n\n")
+
+    print(f"File saved in '{raw_path}' and processed text saved in '{processed_path}'")
+
     return sections
+
 
 def get_compatibility_score(section_name, section_content, job_description):
     if not section_content:
